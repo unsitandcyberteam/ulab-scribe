@@ -19,3 +19,19 @@ AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
 LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
+---
+
+## Modifications
+
+ULab Scribe is a derivative work of Meetily by Zackriya Solutions, distributed
+under the same MIT License reproduced above. The original copyright notice is
+retained in full as required.
+
+Modifications copyright (c) 2026 Unissant, Inc.
+
+Summary of modifications:
+- Removed all usage telemetry (PostHog client, `posthog-rs` dependency, the
+  Rust `analytics` module, and 25 associated Tauri commands).
+- Removed the auto-updater, which pointed at the upstream release feed and was
+  signed with an upstream key.
+- Rebranded the application to ULab Scribe.

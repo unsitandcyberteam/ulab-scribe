@@ -31,9 +31,9 @@
 //! # Custom Templates
 //!
 //! Users can add custom templates to:
-//! - macOS: `~/Library/Application Support/Meetily/templates/`
-//! - Windows: `%APPDATA%\Meetily\templates\`
-//! - Linux: `~/.config/Meetily/templates/`
+//! - macOS: `~/Library/Application Support/ULab Scribe/templates/`
+//! - Windows: `%APPDATA%\ULab Scribe\templates\`
+//! - Linux: `~/.config/ULab Scribe/templates/`
 //!
 //! Custom templates must follow the JSON schema defined in `types::Template`.
 

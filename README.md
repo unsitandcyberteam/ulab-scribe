@@ -1,271 +1,245 @@
-<div align="center" style="border-bottom: none">
-    <h1>
-        <img src="docs/Meetily-6.png" style="border-radius: 10px;" />
-        <br>
-        Privacy-First AI Meeting Assistant
-    </h1>
-    <a href="https://trendshift.io/repositories/21958" target="_blank"><img src="https://trendshift.io/api/badge/repositories/21958" alt="Zackriya-Solutions%2Fmeetily | Trendshift" style="width: 250px; height: 55px;" width="250" height="55"/></a>
-    <br>
-    <br>
-    <a href="https://github.com/Zackriya-Solutions/meeting-minutes/releases/"><img src="https://img.shields.io/badge/Pre_Release-Link-brightgreen" alt="Pre-Release"></a>
-    <a href="https://github.com/Zackriya-Solutions/meeting-minutes/releases"><img alt="GitHub Repo stars" src="https://img.shields.io/github/stars/zackriya-solutions/meeting-minutes?style=flat">
-</a>
- <a href="https://github.com/Zackriya-Solutions/meeting-minutes/releases"> <img alt="GitHub Downloads (all assets, all releases)" src="https://img.shields.io/github/downloads/zackriya-solutions/meeting-minutes/total?style=plastic"> </a>
-    <a href="https://github.com/Zackriya-Solutions/meeting-minutes/releases"><img src="https://img.shields.io/badge/License-MIT-blue" alt="License"></a>
-    <a href="https://github.com/Zackriya-Solutions/meeting-minutes/releases"><img src="https://img.shields.io/badge/Supported_OS-macOS,_Windows-white" alt="Supported OS"></a>
-    <a href="https://github.com/Zackriya-Solutions/meeting-minutes/releases"><img alt="GitHub Tag" src="https://img.shields.io/github/v/tag/zackriya-solutions/meeting-minutes?include_prereleases&color=yellow">
-</a>
-    <br>
-    <h3>
-    <br>
-    Open Source • Privacy-First • Enterprise-Ready
-    </h3>
-    <p align="center">
-    Get latest <a href="https://www.zackriya.com/meetily-subscribe/"><b>Product updates</b></a> <br><br>
-    <a href="https://meetily.ai"><b>Website</b></a> •
-    <a href="https://www.linkedin.com/company/106363062/"><b>LinkedIn</b></a> •
-    <a href="https://discord.gg/crRymMQBFH"><b>Meetily Discord</b></a> •
-    <a href="https://discord.com/invite/vCFJvN4BwJ"><b>Privacy-First AI</b></a> •
-    <a href="https://www.reddit.com/r/meetily/"><b>Reddit</b></a>
-</p>
-    <p align="center">
+# ULab Scribe
 
-A privacy-first AI meeting assistant that captures, transcribes, and summarizes meetings entirely on your infrastructure. Built by expert AI engineers passionate about data sovereignty and open source solutions. Perfect for enterprises that need advanced meeting intelligence without compromising on privacy, compliance, or control.
+Local-first meeting transcription and summarisation. Audio is captured, transcribed and
+summarised on the machine it runs on. This build sends **no telemetry**.
 
-</p>
+Built by Unissant ULab — [unissant.us](https://unissant.us)
 
-<p align="center">
-    <img src="docs/meetily_demo.gif" width="650" alt="Meetily Demo" />
-    <br>
-    <a href="https://youtu.be/6FnhSC_eSz8">View full Demo Video</a>
-</p>
-
-</div>
+Based on [Meetily](https://github.com/Zackriya-Solutions/meeting-minutes) by Zackriya
+Solutions, MIT licensed. See [LICENSE.md](LICENSE.md). The original project README is
+preserved as [README.upstream.md](README.upstream.md).
 
 ---
 
-> **Meetily PRO Upgrade Offer** - Meetily PRO is available for users who need enhanced accuracy, advanced exports, custom summary workflows, and team-ready features. Use coupon code **LAUNCH20** for **20% off** until the next Meetily Community Edition release. Speaker diarization is also planned for PRO in mid-June. [Explore Meetily PRO →](https://meetily.ai/pro/)
+## What changed from upstream
+
+| Area | Change |
+|---|---|
+| Telemetry | **Removed entirely.** Upstream shipped a PostHog client reporting first launch, daily active users, session lifecycle, meeting metadata and model choices to a vendor-owned endpoint. The Rust `analytics` module, the `posthog-rs` dependency and all 25 Tauri commands are gone; the frontend module is a typed no-op shim. |
+| Auto-updater | **Removed.** It pointed at upstream's GitHub release feed and was signed with upstream's minisign key, so a ULab Scribe install would have updated itself into upstream binaries. See `frontend/src/services/updateService.ts` for how to re-enable against a Unissant-controlled feed. |
+| Consent UI | Removed. A consent toggle for telemetry that no longer exists is misleading. |
+| Branding | `ULab Scribe` / `com.unissant.ulabscribe` / binary `ulab-scribe`. |
+
+### Still pointing at upstream infrastructure
+
+These are **deliberately unchanged** — rewriting them would break the app. Review before
+any wide deployment:
+
+- `backend/start_with_output.ps1` downloads `whisper-server.exe` from upstream's GitHub
+  releases at runtime.
+- `frontend/src-tauri/src/parakeet_engine/parakeet_engine.rs` fetches Parakeet models from
+  `meetily.towardsgeneralintelligence.com`.
+- `backend/whisper.cpp` is a git submodule of a Zackriya fork of whisper.cpp.
+- **The build script downloads a 101 MB FFmpeg binary at compile time** from
+  `github.com/Zackriya-Solutions/ffmpeg-binaries` (see `frontend/src-tauri/build/ffmpeg.rs`).
+- The legacy-database import paths still reference `/var/meetily/` on purpose — that is
+  where an existing Meetily install keeps its data.
+
+For any wide deployment, mirror all four of these internally rather than fetching from a
+third party's release feed at build and run time.
+
+### Not yet done
+
+- **Code signing.** `signCommand` has been removed from `tauri.conf.json` so unsigned
+  internal builds succeed; the original is preserved at `tauri.conf.json.signed-bak`.
+  Restore it once a Unissant certificate is available. Unsigned builds trip SmartScreen.
 
 ---
 
-<details>
-<summary>Table of Contents</summary>
+## Building on Windows
 
-- [Introduction](#introduction)
-- [Why Meetily?](#why-meetily)
-- [Features](#features)
-- [Installation](#installation)
-- [Key Features in Action](#key-features-in-action)
-- [System Architecture](#system-architecture)
-- [For Developers](#for-developers)
-- [Meetily PRO](#meetily-pro)
-- [Contributing](#contributing)
-- [License](#license)
+### 1. Prerequisites
 
-</details>
+Run in an **elevated** PowerShell:
 
-## Introduction
-
-Meetily is a privacy-first AI meeting assistant that runs entirely on your local machine. It captures your meetings, transcribes them in real-time, and generates summaries, all without sending any data to the cloud. This makes it the perfect solution for professionals and enterprises who need to maintain complete control over their sensitive information.
-
-## Why Meetily?
-
-While there are many meeting transcription tools available, this solution stands out by offering:
-
-- **Privacy First:** All processing happens locally on your device.
-- **Cost-Effective:** Uses open-source AI models instead of expensive APIs.
-- **Flexible:** Works offline and supports multiple meeting platforms.
-- **Customizable:** Self-host and modify for your specific needs.
-
-<details>
-<summary>The Privacy Problem</summary>
-
-Meeting AI tools create significant privacy and compliance risks across all sectors:
-
-- **$4.4M average cost per data breach** (IBM 2024)
-- **€5.88 billion in GDPR fines** issued by 2025
-- **400+ unlawful recording cases** filed in California this year
-
-Whether you're a defense consultant, enterprise executive, legal professional, or healthcare provider, your sensitive discussions shouldn't live on servers you don't control. Cloud meeting tools promise convenience but deliver privacy nightmares with unclear data storage practices and potential unauthorized access.
-
-**Meetily solves this:** Complete data sovereignty on your infrastructure, zero vendor lock-in, and full control over your sensitive conversations.
-
-</details>
-
-## Features
-
-- **Local First:** All processing is done on your machine. No data ever leaves your computer.
-- **Real-time Transcription:** Get a live transcript of your meeting as it happens.
-- **AI-Powered Summaries:** Generate summaries of your meetings using powerful language models.
-- **Multi-Platform:** Works on macOS, Windows, and Linux.
-- **Open Source:** Meetily is open source and free to use.
-- **Flexible AI Provider Support:** Choose from Ollama (local), Claude, Groq, OpenRouter, or use your own OpenAI-compatible endpoint.
-
-## Installation
-
-### 🪟 **Windows**
-
-1. Download the latest `x64-setup.exe` from [Releases](https://github.com/Zackriya-Solutions/meeting-minutes/releases/latest)
-2. Run the installer
-
-### 🍎 **macOS**
-
-1. Download `meetily_0.4.0_aarch64.dmg` from [Releases](https://github.com/Zackriya-Solutions/meeting-minutes/releases/latest)
-2. Open the downloaded `.dmg` file
-3. Drag **Meetily** to your Applications folder
-4. Open **Meetily** from Applications folder
-
-### 🐧 **Linux**
-
-Build from source following our detailed guides:
-
-- [Building on Linux](docs/building_in_linux.md)
-- [General Build Instructions](docs/BUILDING.md)
-
-**Quick start:**
-
-```bash
-git clone https://github.com/Zackriya-Solutions/meeting-minutes
-cd meeting-minutes/frontend
-pnpm install
-./build-gpu.sh
+```powershell
+winget install --id Rustlang.Rustup   -e --accept-package-agreements --accept-source-agreements
+winget install --id OpenJS.NodeJS.LTS -e --accept-package-agreements --accept-source-agreements
+winget install --id Kitware.CMake     -e --accept-package-agreements --accept-source-agreements
+winget install --id Microsoft.VisualStudio.2022.BuildTools -e --override "--quiet --wait --add Microsoft.VisualStudio.Workload.VCTools --includeRecommended"
 ```
 
-## Key Features in Action
+`Microsoft.VisualStudio.Workload.VCTools` is the large one (several GB) and supplies the
+MSVC linker Rust needs on Windows. WebView2 ships with Windows 11 — verify at
+`C:\Program Files (x86)\Microsoft\EdgeWebView\Application`.
 
-### 🎯 Local Transcription
+### LLVM — install 18.1.8, not the latest
 
-Transcribe meetings entirely on your device using **Whisper** or **Parakeet** models. No cloud required.
+`whisper-rs-sys 0.11.1` uses `bindgen 0.69.5`, which cannot parse the whisper.cpp headers
+with a modern clang. Under **clang 22** bindgen emits a `whisper_full_params` struct with
+**2 fields instead of 59** — silently, with no error or warning. The build then fails much
+later with ~71 `error[E0609]: no field ... on type whisper_full_params` errors pointing
+*inside the `whisper-rs` crate*. It looks exactly like a dependency version conflict. It
+is not one.
 
-<p align="center">
-    <img src="docs/home.png" width="650" style="border-radius: 10px;" alt="Meetily Demo" />
-</p>
+Get libclang 18 without disturbing any LLVM you already have — extract it rather than
+running the installer (the NSIS installer uninstalls your existing LLVM first, and will
+leave you with none if it then aborts):
 
-### 📥 Import & Enhance `Beta`
+```powershell
+$url = 'https://github.com/llvm/llvm-project/releases/download/llvmorg-18.1.8/LLVM-18.1.8-win64.exe'
+Invoke-WebRequest -Uri $url -OutFile "$env:TEMP\LLVM-18.1.8-win64.exe" -UseBasicParsing
+& 'C:\Program Files\7-Zip\7z.exe' x "$env:TEMP\LLVM-18.1.8-win64.exe" -oC:\LLVM18 -y
+[Environment]::SetEnvironmentVariable('LIBCLANG_PATH','C:\LLVM18\bin','Machine')
+```
 
-Import existing audio files to generate transcripts, or enhance to re-transcribe any recorded meeting with a different model or language, all processed locally.
+Only `libclang.dll` is needed; nothing has to be on `PATH`.
 
-> Contributed by [Jeremi Joslin](https://github.com/jeremi), improved by [Vishnu P S](https://github.com/p-s-vishnu) and [Mohammed Safvan](https://github.com/mohammedsafvan)
+Diagnosing it, if you hit those E0609 errors:
 
-<p align="center">
-    <img src="docs/meetily-export.gif" width="650" style="border-radius: 10px;" alt="Import and Enhance" />
-</p>
+```powershell
+$b = Get-ChildItem target\debug\build\whisper-rs-sys-*\out\bindings.rs | Select-Object -First 1
+Select-String -Path $b.FullName -Pattern "pub initial_prompt"   # must match; empty = truncated bindings
+```
 
-### 🤖 AI-Powered Summaries
+After changing libclang, force the sys crate to regenerate: `cargo clean -p whisper-rs-sys`.
 
-Generate meeting summaries with your choice of AI provider. **Ollama** (local) is recommended, with support for Claude, Groq, OpenRouter, and OpenAI.
+Open a **new** shell so PATH updates apply, then:
 
-<p align="center">
-    <img src="docs/summary.png" width="650" style="border-radius: 10px;" alt="Summary generation" />
-</p>
+```powershell
+rustup default stable-x86_64-pc-windows-msvc
+corepack enable
+corepack prepare pnpm@latest --activate
+```
 
-<p align="center">
-    <img src="docs/editor1.png" width="650" style="border-radius: 10px;" alt="Editor Summary generation" />
-</p>
+Confirm: `rustc --version`, `cargo --version`, `node --version`, `pnpm --version`, `cmake --version`.
 
-### 🔒 Privacy-First Design
+### 2. Fetch the whisper.cpp submodule
 
-All data stays on your machine. Transcription models, recordings, and transcripts are stored locally.
+The repo was cloned shallow. The backend needs the submodule:
 
-<p align="center">
-    <img src="docs/settings.png" width="650" style="border-radius: 10px;" alt="Local Transcription and storage" />
-</p>
+```powershell
+cd $env:USERPROFILE\Projects\meetily
+git submodule update --init --recursive --depth 1
+```
 
-### 🌐 Custom OpenAI Endpoint Support
+### 3. Build the llama-helper sidecar
 
-Use your own OpenAI-compatible endpoint for AI summaries. Perfect for organizations with custom AI infrastructure or preferred providers.
+`tauri.conf.json` declares two `externalBin` sidecars. FFmpeg is downloaded automatically
+by the build script, but `llama-helper` must be built from the crate in this repo and
+placed with the target-triple suffix Tauri expects, or the build fails with
+`resource path binaries\llama-helper-x86_64-pc-windows-msvc.exe doesn't exist`:
 
-<p align="center">
-    <img src="docs/custom.png" width="650" style="border-radius: 10px;" alt="Custom OpenAI Endpoint Configuration" />
-</p>
+```powershell
+cd $env:USERPROFILE\Projects\meetily\llama-helper
+cargo build --release
+Copy-Item ..\target\release\llama-helper.exe `
+  ..\frontend\src-tauri\binaries\llama-helper-x86_64-pc-windows-msvc.exe
+```
 
-### 🎙️ Professional Audio Mixing
+### 4. Install frontend dependencies
 
-Capture microphone and system audio simultaneously with intelligent ducking and clipping prevention.
+```powershell
+cd frontend
+pnpm install
+```
 
-<p align="center">
-    <img src="docs/audio.png" width="650" style="border-radius: 10px;" alt="Device selection" />
-</p>
+### 5. Run in development
 
-### ⚡ GPU Acceleration
+```powershell
+pnpm tauri dev
+```
 
-Built-in support for hardware acceleration across platforms:
+This starts Next.js on `http://localhost:3118` and launches the Tauri shell against it.
+First run compiles the whole Rust dependency tree — expect 10–25 minutes. Later runs are
+incremental.
 
-- **macOS**: Apple Silicon (Metal) + CoreML
-- **Windows/Linux**: NVIDIA (CUDA), AMD/Intel (Vulkan)
+### 6. Build the Windows installer
 
-Automatically enabled at build time - no configuration needed.
+```powershell
+cd frontend
+pnpm tauri build
+```
 
-## System Architecture
+Artifacts land in `frontend/src-tauri/target/release/bundle/`:
 
-Meetily is a single, self-contained application built with [Tauri](https://tauri.app/). It uses a Rust-based backend to handle all the core logic, and a Next.js frontend for the user interface.
+- `msi/ULab Scribe_0.4.0_x64_en-US.msi`
+- `nsis/ULab Scribe_0.4.0_x64-setup.exe`
+- the raw binary at `frontend/src-tauri/target/release/ulab-scribe.exe`
 
-For more details, see the [Architecture documentation](docs/architecture.md).
+### Build notes
 
-## For Developers
+- **Code signing:** removed. Upstream's `tauri.conf.json` invoked
+  `scripts/sign-windows.ps1` via a `signCommand` key, which fails without a certificate.
+  The original config is kept at `tauri.conf.json.signed-bak`; restore that key once a
+  Unissant signing cert exists.
+- **Branding assets:** the full icon set, `public/logo.png` (845×295 wordmark) and
+  `public/logo-collapsed.png` (500×500) are generated from `ulab-scribe-icon.png` in the
+  repo root. Regenerate the app icons with `pnpm tauri icon ..\ulab-scribe-icon.png`.
+- **GPU acceleration:** CUDA and Vulkan backends are optional; the CPU build works
+  everywhere. See `docs/` for enabling them.
+- **First build size:** the Rust target directory reaches 10–20 GB.
 
-If you want to contribute to Meetily or build it from source, you'll need to have Rust and Node.js installed. For detailed build instructions, please see the [Building from Source guide](docs/BUILDING.md).
+---
 
-## Meetily Pro
+## Building for macOS
 
-<p align="center">
-    <img src="docs/pv2.1.png" width="650" style="border-radius: 10px;" alt="Upcoming version" />
-</p>
+**A macOS build cannot be produced on Windows.** Not a tooling gap that can be closed — Tauri's
+`.app` and `.dmg` bundlers, `codesign`, `hdiutil`, `lipo` and the macOS SDK are Apple-only. The
+Rust target (`aarch64-apple-darwin`) installs fine, but there is nothing to link with. Two real
+paths:
 
-**Meetily PRO** is a professional-grade solution with enhanced accuracy and advanced features for serious users and teams. Built on a different codebase with superior transcription models and enterprise-ready capabilities.
+### Option A — on a Mac (Apple Silicon)
 
-### Community Thank-You Offer
+```bash
+xcode-select --install                       # Apple toolchain
+brew install cmake llvm@18 node pnpm
+export LIBCLANG_PATH="$(brew --prefix llvm@18)/lib"   # same bindgen constraint as Windows
+rustup target add aarch64-apple-darwin
 
-Meetily Community Edition will remain free and open source. PRO exists for users and teams who want a more advanced meeting workflow, including higher transcription accuracy, custom summary templates, advanced exports, auto-meeting detection, and self-hosted deployment options.
+git clone <this-repo> && cd meetily
+git submodule update --init --recursive
 
-For the community that helped Meetily grow, we are making the upgrade easier: use coupon code **LAUNCH20** for **20% off Meetily PRO** until the next Meetily Community Edition release.
+cargo build --release -p llama-helper --features metal
+mkdir -p frontend/src-tauri/binaries
+cp target/release/llama-helper frontend/src-tauri/binaries/llama-helper-aarch64-apple-darwin
 
-Speaker diarization is planned for mid-June, bringing automatic speaker separation to PRO meetings.
+cd frontend && pnpm install && pnpm tauri build --target aarch64-apple-darwin
+```
 
-### Key Advantages Over Community Edition:
+Artifacts land in `target/aarch64-apple-darwin/release/bundle/` as `dmg/*.dmg` and `macos/*.app`.
 
-- **Enhanced Accuracy**: Superior transcription models for professional-grade accuracy
-- **Custom Summary Templates**: Tailor summaries to your specific workflow and needs
-- **Advanced Export Options**: PDF, DOCX, and Markdown exports with formatting
-- **Auto-detect and Join Meetings**: Automatic meeting detection and joining
-- **Speaker Identification**: Distinguish between speakers automatically *(Coming Soon)*
-- **Chat with Meetings**: AI-powered meeting insights and queries *(Coming Soon)*
-- **Calendar Integration**: Seamless integration with your calendar *(Coming Soon)*
-- **Self-Hosted Deployment**: Deploy on your own infrastructure for teams
-- **GDPR Compliance Built-In**: Privacy by design architecture with complete audit trails
-- **Priority Support**: Dedicated support for PRO users
+### Option B — GitHub Actions (no Mac required)
 
-### Who is PRO for?
+`.github/workflows/build-macos.yml` runs on `macos-latest` and is `workflow_dispatch` (manual).
+It already builds the llama-helper sidecar with Metal and produces DMG + .app. Set
+`sign-build: false` and it produces an **unsigned** build with no Apple Developer account —
+the same posture as the current Windows build.
 
-- **Professionals** who need the highest accuracy for critical meetings
-- **Teams and organizations** (2-100 users) requiring self-hosted deployment
-- **Power users** who need advanced export formats and custom workflows
-- **Compliance-focused organizations** requiring GDPR readiness
+For a signed and notarized build, populate these repository secrets: `APPLE_CERTIFICATE`,
+`APPLE_CERTIFICATE_PASSWORD`, `APPLE_SIGNING_IDENTITY`, `APPLE_ID`, `APPLE_ID_PASSWORD`,
+`APPLE_TEAM_ID`. Apple gatekeeping is stricter than SmartScreen — an unsigned `.app` from the
+internet is blocked outright rather than warned about, so notarization matters more on macOS
+than it does on Windows.
 
-> **Note:** Meetily Community Edition remains **free & open source forever** with local transcription, AI summaries, and core features. PRO is a separate professional solution for users who need enhanced accuracy and advanced capabilities.
+### macOS-specific notes
 
-For organizations needing 100+ users or managed compliance solutions, explore [Meetily Enterprise](https://meetily.ai/enterprise/).
+- `tauri.conf.json` sets `signingIdentity: "-"` (ad-hoc) and `hardenedRuntime: true`. Ad-hoc
+  signing is fine locally; distribution needs a real Developer ID.
+- The updater removal means `TAURI_SIGNING_PRIVATE_KEY` in the workflow is now unused. Harmless,
+  but it no longer produces `.sig` files because `createUpdaterArtifacts` is `false`.
+- `whisper-rs` builds with Metal and CoreML features on macOS — different acceleration path from
+  the Windows CPU build, so transcription performance will not be comparable.
+- The macOS console helper shells out to `log stream --process "ULab Scribe"`. The quotes matter:
+  the product name contains a space.
 
-**Learn more about pricing and features:** [https://meetily.ai/pro/](https://meetily.ai/pro/)
+---
 
-## Contributing
+## Verifying the telemetry removal
 
-We welcome contributions from the community! If you have any questions or suggestions, please open an issue or submit a pull request. Please follow the established project structure and guidelines. For more details, refer to the [CONTRIBUTING.md](CONTRIBUTING.md) file.
+After building, confirm nothing phones home:
 
-Thanks for all the contributions. Our community is what makes this project possible.
+```powershell
+# no analytics module or dependency left in the tree
+Select-String -Path "frontend\src-tauri\Cargo.toml" -Pattern "posthog"
+Get-ChildItem frontend\src-tauri\src\analytics -ErrorAction SilentlyContinue
 
-## License
+# no PostHog host string in the compiled binary
+Get-Content "frontend\src-tauri\target\release\ulab-scribe.exe" -AsByteStream -Raw |
+  ForEach-Object { [System.Text.Encoding]::ASCII.GetString($_) } |
+  Select-String -Pattern "posthog" -AllMatches
+```
 
-MIT License - Feel free to use this project for your own purposes.
-
-## Acknowledgments
-
-- We borrowed some code from [Whisper.cpp](https://github.com/ggerganov/whisper.cpp).
-- We borrowed some code from [Screenpipe](https://github.com/mediar-ai/screenpipe).
-- We borrowed some code from [transcribe-rs](https://crates.io/crates/transcribe-rs).
-- Thanks to **NVIDIA** for developing the **Parakeet** model.
-- Thanks to [istupakov](https://huggingface.co/istupakov/parakeet-tdt-0.6b-v3-onnx) for providing the **ONNX conversion** of the Parakeet model.
-
-## Star History
-
-[![Star History Chart](https://api.star-history.com/chart?repos=Zackriya-Solutions/meetily&type=date&legend=top-left)](https://www.star-history.com/?repos=Zackriya-Solutions%2Fmeetily&type=date&legend=bottom-right)
+All three should return nothing. For a stronger check, run the app behind a proxy or with
+Wireshark and confirm the only outbound connections are to the model endpoints you
+configured.

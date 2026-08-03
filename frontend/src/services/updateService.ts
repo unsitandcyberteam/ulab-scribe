@@ -25,6 +25,26 @@ export interface UpdateProgress {
 }
 
 /**
+ * Auto-update is disabled in ULab Scribe.
+ *
+ * Upstream pointed the Tauri updater at Zackriya's GitHub release feed and
+ * signed manifests with Zackriya's minisign key. Shipping that unchanged would
+ * mean ULab Scribe installs silently updating themselves into upstream Meetily
+ * binaries, and we hold neither the private key nor the release feed.
+ *
+ * The `updater` plugin has been removed from tauri.conf.json and lib.rs, so
+ * `check()` would throw at runtime. This flag short-circuits before that.
+ *
+ * To re-enable against a Unissant-controlled feed:
+ *   1. `pnpm tauri signer generate -w ~/.tauri/ulab-scribe.key`
+ *   2. Put the public key + your endpoint back in tauri.conf.json under
+ *      plugins.updater, and re-add `tauri_plugin_updater` to Cargo.toml and
+ *      the plugin registration in lib.rs.
+ *   3. Set TAURI_SIGNING_PRIVATE_KEY at build time and flip this to true.
+ */
+const UPDATER_ENABLED = false;
+
+/**
  * Update Service
  * Singleton service for managing app updates
  */
@@ -39,6 +59,14 @@ export class UpdateService {
    * @returns Promise with update information
    */
   async checkForUpdates(force = false): Promise<UpdateInfo> {
+    // Auto-update disabled for ULab Scribe — see UPDATER_ENABLED above.
+    if (!UPDATER_ENABLED) {
+      return {
+        available: false,
+        currentVersion: await getVersion(),
+      };
+    }
+
     // Prevent concurrent update checks
     if (this.updateCheckInProgress) {
       throw new Error('Update check already in progress');
