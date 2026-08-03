@@ -27,10 +27,10 @@ export interface UpdateProgress {
 /**
  * Auto-update is disabled in ULab Scribe.
  *
- * Upstream pointed the Tauri updater at Zackriya's GitHub release feed and
- * signed manifests with Zackriya's minisign key. Shipping that unchanged would
- * mean ULab Scribe installs silently updating themselves into upstream Meetily
- * binaries, and we hold neither the private key nor the release feed.
+ * The Tauri updater is configured against the upstream release feed and signing
+ * key — correct for upstream builds, but it means ULab Scribe installs would
+ * update themselves to upstream Meetily binaries. We hold neither the release
+ * feed nor the private key, so the updater is removed rather than repointed.
  *
  * The `updater` plugin has been removed from tauri.conf.json and lib.rs, so
  * `check()` would throw at runtime. This flag short-circuits before that.

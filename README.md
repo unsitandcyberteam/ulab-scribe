@@ -15,28 +15,34 @@ preserved as [README.upstream.md](README.upstream.md).
 
 | Area | Change |
 |---|---|
-| Telemetry | **Removed entirely.** Upstream shipped a PostHog client reporting first launch, daily active users, session lifecycle, meeting metadata and model choices to a vendor-owned endpoint. The Rust `analytics` module, the `posthog-rs` dependency and all 25 Tauri commands are gone; the frontend module is a typed no-op shim. |
-| Auto-updater | **Removed.** It pointed at upstream's GitHub release feed and was signed with upstream's minisign key, so a ULab Scribe install would have updated itself into upstream binaries. See `frontend/src/services/updateService.ts` for how to re-enable against a Unissant-controlled feed. |
-| Consent UI | Removed. A consent toggle for telemetry that no longer exists is misleading. |
-| Branding | `ULab Scribe` / `com.unissant.ulabscribe` / binary `ulab-scribe`. |
+These changes reflect the requirements of our own deployment environment. They are not a
+judgement on the upstream project, whose defaults are reasonable for its own users.
 
-### Still pointing at upstream infrastructure
+| Area | Change |
+|---|---|
+| Telemetry | **Removed.** Upstream includes an optional PostHog analytics client. Our environment does not permit usage data to leave the machine, so it is removed rather than disabled: the Rust `analytics` module, the `posthog-rs` dependency and all 25 Tauri commands are gone, and the frontend module is a typed no-op shim. |
+| Auto-updater | **Removed.** The updater is configured against the upstream release feed and signing key, which is correct for upstream builds but means a ULab Scribe install would update itself to upstream binaries. We hold neither the feed nor the key. See `frontend/src/services/updateService.ts` for how to re-enable against a Unissant-controlled feed. |
+| Consent UI | Removed. A consent toggle for telemetry that is no longer present would be misleading. |
+| Branding | `ULab Scribe` / `com.unissant.ulabscribe` / binary `ULab Scribe`. |
 
-These are **deliberately unchanged** — rewriting them would break the app. Review before
-any wide deployment:
+### Artifacts still fetched from upstream
+
+**Deliberately unchanged** — repointing them without an internal artifact host would break the
+build. This is a normal property of forking an actively maintained project, not a defect in it;
+we simply need these under our own control before wide deployment:
 
 - `backend/start_with_output.ps1` downloads `whisper-server.exe` from upstream's GitHub
   releases at runtime.
 - `frontend/src-tauri/src/parakeet_engine/parakeet_engine.rs` fetches Parakeet models from
   `meetily.towardsgeneralintelligence.com`.
-- `backend/whisper.cpp` is a git submodule of a Zackriya fork of whisper.cpp.
-- **The build script downloads a 101 MB FFmpeg binary at compile time** from
+- `backend/whisper.cpp` is a git submodule of an upstream fork of whisper.cpp.
+- The build script downloads a 101 MB FFmpeg binary at compile time from
   `github.com/Zackriya-Solutions/ffmpeg-binaries` (see `frontend/src-tauri/build/ffmpeg.rs`).
-- The legacy-database import paths still reference `/var/meetily/` on purpose — that is
-  where an existing Meetily install keeps its data.
+- The legacy-database import paths still reference `/var/meetily/` on purpose — that is where
+  an existing Meetily install keeps its data, and the import feature depends on it.
 
-For any wide deployment, mirror all four of these internally rather than fetching from a
-third party's release feed at build and run time.
+For wide deployment, mirror all four internally so builds and installs do not depend on any
+external host's availability.
 
 ### Not yet done
 

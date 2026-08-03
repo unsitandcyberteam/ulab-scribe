@@ -1,12 +1,12 @@
 /**
  * Telemetry removed for ULab Scribe.
  *
- * Upstream Meetily shipped a PostHog client (host: https://us.i.posthog.com)
- * that reported first-launch, daily-active-user, session lifecycle, meeting
- * metadata, model choices and device class to a third-party endpoint owned by
- * the upstream vendor. That has been removed in full: the Rust `analytics`
- * module, the `posthog-rs` dependency, and all 25 Tauri command registrations
- * are gone from the binary.
+ * Upstream Meetily includes a PostHog analytics client (host:
+ * https://us.i.posthog.com) covering first-launch, daily-active-user, session
+ * lifecycle, meeting metadata, model choices and device class. Our deployment
+ * environment does not permit usage data to leave the machine, so it is removed
+ * rather than switched off: the Rust `analytics` module, the `posthog-rs`
+ * dependency, and all 25 Tauri command registrations are gone from the binary.
  *
  * This file is a typed no-op shim. It preserves the original public surface so
  * every call site keeps compiling and behaves as though analytics were
