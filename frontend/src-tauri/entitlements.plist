@@ -10,5 +10,37 @@
     <true/>
     <key>com.apple.security.device.screen-capture</key>
     <true/>
+
+    <!--
+      The entitlements below are required because tauri.conf.json sets
+      hardenedRuntime: true. Hardened Runtime is designed to pair with a
+      Developer ID signature and enforces restrictions that break this app
+      without explicit opt-outs.
+
+      allow-jit, allow-unsigned-executable-memory
+        WKWebView renders the entire UI and JIT-compiles JavaScript. Under
+        Hardened Runtime without these, the webview fails: the window comes up
+        blank, or the process dies on launch.
+
+      disable-library-validation
+        The bundle ships two sidecar executables, ffmpeg and llama-helper.
+        Library validation refuses to execute code not signed by the same Team
+        ID. With ad-hoc signatures there is no Team ID, so recording and
+        summarisation fail the moment a sidecar is invoked.
+
+      allow-dyld-environment-variables
+        Some ffmpeg builds rely on dyld search paths.
+
+      These remain correct once a real Developer ID is in use. They are not a
+      substitute for one.
+    -->
+    <key>com.apple.security.cs.allow-jit</key>
+    <true/>
+    <key>com.apple.security.cs.allow-unsigned-executable-memory</key>
+    <true/>
+    <key>com.apple.security.cs.disable-library-validation</key>
+    <true/>
+    <key>com.apple.security.cs.allow-dyld-environment-variables</key>
+    <true/>
 </dict>
 </plist>
